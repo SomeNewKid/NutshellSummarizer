@@ -1,0 +1,38 @@
+[
+  {
+    "title": "Snow White and Rose Red",
+    "filename": "snow_white_and_rose_red.txt",
+    "authors": "Jacob Grimm, Wilhelm Grimm",
+    "source": "Project Gutenberg"
+  },
+  {
+    "title": "Cat Skin",
+    "filename": "cat_skin.txt",
+    "authors": "Jacob Grimm, Wilhelm Grimm",
+    "source": "Project Gutenberg"
+  },
+  {
+    "title": "Iron Hans",
+    "filename": "iron_hans.txt",
+    "authors": "Jacob Grimm, Wilhelm Grimm",
+    "source": "Project Gutenberg"
+  },
+  {
+    "title": "King Grisly Beard",
+    "filename": "king_grisly_beard.txt",
+    "authors": "Jacob Grimm, Wilhelm Grimm",
+    "source": "Project Gutenberg"
+  },
+  {
+    "title": "The Youth Who Went Forth to Learn What Fear Was",
+    "filename": "the_youth_who_went_forth_to_learn_what_fear_was.txt",
+    "authors": "Jacob Grimm, Wilhelm Grimm",
+    "source": "Project Gutenberg"
+  },
+  {
+    "title": "The Salad",
+    "filename": "the_salad.txt",
+    "authors": "Jacob Grimm, Wilhelm Grimm",
+    "source": "Project Gutenberg"
+  }
+]
