@@ -1,49 +1,46 @@
 # Nutshell Summarizer
 
-Nutshell Summarizer is a small Python agent built with AWS Strands Agents and
-deployed to AWS Bedrock AgentCore. It includes a handful of public-domain story
-texts from Project Gutenberg and can summarize a known story on request.
+Nutshell Summarizer is a small Python command-line and AWS Bedrock AgentCore
+sample for exploring AWS Strands Agents. It accepts a request for a known story,
+fetches that story from a bundled Project Gutenberg text collection, and prints
+a short summary.
 
-Example:
+> [!WARNING]
+> This is an experimental project and should not be considered production-ready.
+
+The project was created to take first steps with Strands Agents and Bedrock
+AgentCore. The story collection is intentionally small so the tool-calling
+workflow stays visible: the agent should only summarize stories that exist in
+the local manifest.
+
+## What It Does
+
+The CLI accepts a prompt such as:
 
 ```powershell
 .\.venv\Scripts\python.exe -m nutshell_summarizer "Summarize the story about Snow White and Rose Red"
 ```
 
-## Project Layout
+The agent then:
 
-```text
-app/NutshellSummarizer/
-  entrypoint.py                  # Bedrock AgentCore runtime entrypoint
-  pyproject.toml                 # Minimal runtime package metadata
-  nutshell_summarizer/
-    __main__.py                  # python -m nutshell_summarizer
-    cli.py                       # Local CLI adapter
-    bedrock.py                   # AgentCore adapter
-    agent.py                     # Strands Agent construction
-    tools.py                     # Strands tools
-    library.py                   # Story manifest and content loading
-    stories/                     # Bundled Project Gutenberg story texts
-agentcore/
-  agentcore.json                 # AgentCore project configuration
-  cdk/                           # Generated CDK deployment project
-scripts/
-  setup-dev.ps1                  # Restore Python and AgentCore/CDK dependencies
-  check.ps1                      # Format, lint, type-check, and test
-tests/
-```
+- reads the local story manifest
+- includes the available story titles in the system prompt
+- calls the `fetch_story_tool` tool when the user asks for a known story
+- reads the matching bundled text file from `stories`
+- asks the Bedrock-hosted model to summarize the story in about 100 words
+- declines or asks for clarification when the requested story is not available
 
-The application package lives under `app/NutshellSummarizer`. There is no
-separate `src` package; this avoids duplicating the agent code used locally and
-in AgentCore.
+The same application package can run locally as a Python module or through the
+AgentCore runtime adapter.
 
-## Prerequisites
+## Requirements
 
-- Python 3.11
-- Node.js 20 or later
-- npm
-- AWS CLI configured for an AWS identity that can use Bedrock and AgentCore
-- AgentCore CLI:
+- Python 3.11.
+- PowerShell on Windows.
+- Node.js 20 or later.
+- npm.
+- AWS CLI configured for an AWS identity that can use Bedrock and AgentCore.
+- AgentCore CLI installed globally:
 
 ```powershell
 npm install -g @aws/agentcore
@@ -53,59 +50,44 @@ The selected Bedrock model must also be enabled for the AWS account and region.
 
 ## Setup
 
-From the repository root:
+Create the virtual environment, install the Python project with development
+dependencies, and restore the generated AgentCore CDK dependencies:
 
 ```powershell
 .\scripts\setup-dev.ps1
 ```
 
-This script:
+The setup script expects Python 3.11 at the path configured in
+`scripts\setup-dev.ps1`. It also expects `node`, `npm`, and `agentcore` to be
+available on `PATH`.
 
-- creates or reuses the root `.venv`
-- installs the Python package in editable mode with dev tools
-- verifies `node`, `npm`, and `agentcore`
-- restores `agentcore/cdk/node_modules` with `npm ci`
-- builds the AgentCore CDK project
+## Running
 
-## Local CLI
-
-Run the agent directly as a Python module:
+Run the agent from the repository root:
 
 ```powershell
 .\.venv\Scripts\python.exe -m nutshell_summarizer "Summarize the story of Iron Hans"
 ```
 
-Or use the installed console script:
+You can also run the installed console script:
 
 ```powershell
 .\.venv\Scripts\nutshell-summarizer.exe "Summarize the story of Iron Hans"
 ```
 
-## AgentCore Local Runtime
-
-Run through the AgentCore local development runtime:
-
-```powershell
-agentcore dev --logs
-```
-
-In another terminal:
+Run the same agent through the local AgentCore runtime with:
 
 ```powershell
 agentcore dev "Summarize the story about Snow White and Rose Red"
 ```
 
-## Checks
-
-After meaningful code changes:
+For runtime logs:
 
 ```powershell
-.\scripts\check.ps1
+agentcore dev --logs
 ```
 
-This runs Ruff formatting, Ruff linting, Pyright, and Pytest.
-
-## Deploy
+## Deployment
 
 Validate the AgentCore configuration:
 
@@ -113,13 +95,13 @@ Validate the AgentCore configuration:
 agentcore validate
 ```
 
-Preview deployment:
+Preview the deployment:
 
 ```powershell
 agentcore deploy --dry-run
 ```
 
-Deploy:
+Deploy to AWS Bedrock AgentCore:
 
 ```powershell
 agentcore deploy -y -v
@@ -131,29 +113,80 @@ Invoke the deployed runtime:
 agentcore invoke --runtime NutshellSummarizer "Summarize the story about Snow White and Rose Red" --stream
 ```
 
-## Git Notes
+## Development Checks
 
-Commit the AgentCore configuration and CDK source under `agentcore/`, including
-`agentcore/cdk/package-lock.json`. Do not commit generated folders such as:
+Run formatting, linting, type checking, and tests:
 
-```text
-.venv/
-app/NutshellSummarizer/.venv/
-agentcore/cdk/node_modules/
-agentcore/cdk/cdk.out/
-agentcore/cdk/dist/
-agentcore/.cache/
-agentcore/.cli/logs/
-agentcore/.cli/traces/
+```powershell
+.\scripts\check.ps1
 ```
 
-## Cleanup
+This runs:
 
-For a temporary experiment, remove deployed AgentCore resources when finished:
+- `ruff format .`
+- `ruff check .`
+- `pyright`
+- `pytest`
+
+## Project Structure
+
+```text
+app/NutshellSummarizer/
+  entrypoint.py          Bedrock AgentCore runtime entry point
+  pyproject.toml         Minimal runtime package metadata
+  nutshell_summarizer/
+    __main__.py          Package entry point for python -m nutshell_summarizer
+    cli.py               Local command-line adapter
+    bedrock.py           AgentCore runtime adapter
+    agent.py             Strands Agent setup and system prompt
+    tools.py             Story-fetching Strands tool
+    library.py           Story manifest and content loading
+    stories/             Bundled Project Gutenberg story texts
+
+agentcore/
+  agentcore.json         AgentCore project configuration
+  cdk/                   Generated CDK deployment project
+
+tests/
+  test_smoke.py
+
+scripts/
+  setup-dev.ps1
+  check.ps1
+```
+
+## Notes
+
+The story collection is deliberately small. If the user asks for a story that is
+not listed in the manifest, the agent is instructed not to invent the story
+contents.
+
+The `agentcore` directory should be committed because it is the infrastructure
+configuration for this sample. Generated folders such as
+`agentcore/cdk/node_modules`, `agentcore/cdk/cdk.out`, `agentcore/.cache`, and
+local virtual environments should not be committed.
+
+Agent behavior and final wording can vary between runs because tool selection
+and final response generation are model-driven. Bedrock model calls may incur
+usage costs.
+
+To remove temporary AgentCore resources after experimenting:
 
 ```powershell
 agentcore remove all -y
 agentcore deploy -y -v
 ```
 
-Then delete any temporary IAM access keys or users created only for this project.
+## Third-Party Notices
+
+This project has direct runtime dependencies on third-party Python packages,
+including `bedrock-agentcore`, `botocore`, `strands-agents`, and
+`aws-opentelemetry-distro`. It also uses generated AgentCore CDK dependencies
+under `agentcore/cdk`. See each package's registry license metadata for full
+license and notice terms.
+
+The bundled story texts are public-domain works sourced from Project Gutenberg.
+
+## License
+
+GNU General Public License v3.0. See the `LICENSE` file for details.
